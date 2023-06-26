@@ -42,27 +42,28 @@
   (odd? (+ (dec file) rank)))
 
 (defn square-colors
-  [black?]
-  (if black?
-    ["bg-[#769656]" "text-gray-400"]
-    ["bg-[#efeed3]" "text-gray-400"]))
+  [file rank selected]
+  (cond
+    (= selected (coords->pos file rank)) ["bg-yellow-300"]
+    (square-black? file rank)            ["bg-[#769656]"]
+    :else                                ["bg-[#efeed3]"]))
 
 (defn square-attrs
   [attrs-base colors]
   (update attrs-base :class into colors))
 
 (defn square
-  [attrs file rank piece]
-  (let [black?        (square-black? file rank)
-        colors        (square-colors black?)
+  [attrs file rank piece selected]
+  (let [colors        (square-colors file rank selected)
         updated-attrs (square-attrs attrs colors)]
     [:div updated-attrs
-     (when piece (piece))]))
+     (when piece ((:icon-fn piece)))]))
 
 (defn board
   []
-  (let [pieces @(rf/subscribe [::sub/pieces])
-        side   @(rf/subscribe [::sub/side])]
+  (let [pieces   @(rf/subscribe [::sub/pieces])
+        side     @(rf/subscribe [::sub/side])
+        selected @(rf/subscribe [::sub/selected])]
     [:div.flex.justify-center.p-4
      [:div.grid.grid-cols-8.gap-0.border.border-black
       (for [rank (ranks side)
@@ -71,9 +72,10 @@
                   piece (get pieces pos)]]
         ^{:key pos}
         [square
-         {:id    pos
-          :class ["flex-none" "h-24" "w-24" "hover:bg-green-500/50"]
+         {:id       pos
+          :class    ["flex-none" "h-24" "w-24"]
           :on-click (fn [_] (rf/dispatch [::event/select-square pos]))}
          file
          rank
-         piece])]]))
+         piece
+         selected])]]))

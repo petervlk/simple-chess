@@ -5,38 +5,38 @@
 
 (def new-game-state
   {:side   :white
-   :pieces {"A1" piece/rook-white
-            "B1" piece/knight-white
-            "C1" piece/bishop-white
-            "D1" piece/queen-white
-            "E1" piece/king-white
-            "F1" piece/bishop-white
-            "G1" piece/knight-white
-            "H1" piece/rook-white
-            "A2" piece/pawn-white
-            "B2" piece/pawn-white
-            "C2" piece/pawn-white
-            "D2" piece/pawn-white
-            "E2" piece/pawn-white
-            "F2" piece/pawn-white
-            "G2" piece/pawn-white
-            "H2" piece/pawn-white
-            "A7" piece/pawn-black
-            "B7" piece/pawn-black
-            "C7" piece/pawn-black
-            "D7" piece/pawn-black
-            "E7" piece/pawn-black
-            "F7" piece/pawn-black
-            "G7" piece/pawn-black
-            "H7" piece/pawn-black
-            "A8" piece/rook-black
-            "B8" piece/knight-black
-            "C8" piece/bishop-black
-            "D8" piece/queen-black
-            "E8" piece/king-black
-            "F8" piece/bishop-black
-            "G8" piece/knight-black
-            "H8" piece/rook-black}})
+   :pieces {"A1" {:color "white" :type "rook" :icon-fn piece/rook-white}
+            "B1" {:color "white" :type "knight" :icon-fn piece/knight-white}
+            "C1" {:color "white" :type "bishop" :icon-fn piece/bishop-white}
+            "D1" {:color "white" :type "queen" :icon-fn piece/queen-white}
+            "E1" {:color "white" :type "king" :icon-fn piece/king-white}
+            "F1" {:color "white" :type "bishop" :icon-fn piece/bishop-white}
+            "G1" {:color "white" :type "knight" :icon-fn piece/knight-white}
+            "H1" {:color "white" :type "rook" :icon-fn piece/rook-white}
+            "A2" {:color "white" :type "pawn" :icon-fn piece/pawn-white}
+            "B2" {:color "white" :type "pawn" :icon-fn piece/pawn-white}
+            "C2" {:color "white" :type "pawn" :icon-fn piece/pawn-white}
+            "D2" {:color "white" :type "pawn" :icon-fn piece/pawn-white}
+            "E2" {:color "white" :type "pawn" :icon-fn piece/pawn-white}
+            "F2" {:color "white" :type "pawn" :icon-fn piece/pawn-white}
+            "G2" {:color "white" :type "pawn" :icon-fn piece/pawn-white}
+            "H2" {:color "white" :type "pawn" :icon-fn piece/pawn-white}
+            "A7" {:color "black" :type "pawn" :icon-fn piece/pawn-black}
+            "B7" {:color "black" :type "pawn" :icon-fn piece/pawn-black}
+            "C7" {:color "black" :type "pawn" :icon-fn piece/pawn-black}
+            "D7" {:color "black" :type "pawn" :icon-fn piece/pawn-black}
+            "E7" {:color "black" :type "pawn" :icon-fn piece/pawn-black}
+            "F7" {:color "black" :type "pawn" :icon-fn piece/pawn-black}
+            "G7" {:color "black" :type "pawn" :icon-fn piece/pawn-black}
+            "H7" {:color "black" :type "pawn" :icon-fn piece/pawn-black}
+            "A8" {:color "black" :type "rook" :icon-fn piece/rook-black}
+            "B8" {:color "black" :type "knight" :icon-fn piece/knight-black}
+            "C8" {:color "black" :type "bishop" :icon-fn piece/bishop-black}
+            "D8" {:color "black" :type "queen" :icon-fn piece/queen-black}
+            "E8" {:color "black" :type "king" :icon-fn piece/king-black}
+            "F8" {:color "black" :type "bishop" :icon-fn piece/bishop-black}
+            "G8" {:color "black" :type "knight" :icon-fn piece/knight-black}
+            "H8" {:color "black" :type "rook" :icon-fn piece/rook-black}}})
 
 (rf/reg-event-db
   ::initialize
@@ -57,22 +57,11 @@
   [{:keys [db]} [_ pos]]
   (let [selected (:selected db)]
     (cond
-      (nil? selected)                    {:db (assoc db :selected pos)}
-      (and selected (not= selected pos)) {:fx [[:dispatch [::move selected pos]]]
-                                          :db (dissoc db :selected)}
-      :else                              nil))
-  )
+      (and (nil? selected) (get-in db [:pieces pos])) {:db (assoc db :selected pos)}
+      (and selected (= selected pos))                 {:db (dissoc db :selected)}
+      (and selected (not= selected pos))              {:fx [[:dispatch [::move selected pos]]]
+                                                       :db (dissoc db :selected)})))
 
 (rf/reg-event-fx
   ::select-square
   select-square)
-
-(comment
-  (rf/dispatch-sync [::initialize])
-  (rf/dispatch [::move "D2" "D4"])
-  (rf/dispatch [::move "C1" "F4"])
-  (rf/dispatch [::move "F4" "C7"])
-  (rf/dispatch [::move "C7" "D8"])
-  (rf/dispatch [::move "C7" "D8"])
-  (rf/dispatch [::move "E1" "E8"])
-  )

@@ -10,3 +10,8 @@
   ::side
   (fn [db _]
     (:side db)))
+
+(rf/reg-sub
+  ::selected
+  (fn [db _]
+    (:selected db)))

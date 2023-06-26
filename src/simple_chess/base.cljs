@@ -1,6 +1,7 @@
 (ns simple-chess.base
   (:require
-   [simple-chess.piece :as piece]
+   [simple-chess.sub :as sub]
+   [simple-chess.event :as event]
    [re-frame.core :as rf]))
 
 (def board-dimension 8)
@@ -36,41 +37,6 @@
     (inc (- (.charCodeAt pos 0) (.charCodeAt \A 0)))
     (inc (- (.charCodeAt pos 1) (.charCodeAt \1 0)))))
 
-(def new-game-state
-  {:side   :white
-   :pieces {"A1" piece/rook-white
-            "B1" piece/knight-white
-            "C1" piece/bishop-white
-            "D1" piece/queen-white
-            "E1" piece/king-white
-            "F1" piece/bishop-white
-            "G1" piece/knight-white
-            "H1" piece/rook-white
-            "A2" piece/pawn-white
-            "B2" piece/pawn-white
-            "C2" piece/pawn-white
-            "D2" piece/pawn-white
-            "E2" piece/pawn-white
-            "F2" piece/pawn-white
-            "G2" piece/pawn-white
-            "H2" piece/pawn-white
-            "A7" piece/pawn-black
-            "B7" piece/pawn-black
-            "C7" piece/pawn-black
-            "D7" piece/pawn-black
-            "E7" piece/pawn-black
-            "F7" piece/pawn-black
-            "G7" piece/pawn-black
-            "H7" piece/pawn-black
-            "A8" piece/rook-black
-            "B8" piece/knight-black
-            "C8" piece/bishop-black
-            "D8" piece/queen-black
-            "E8" piece/king-black
-            "F8" piece/bishop-black
-            "G8" piece/knight-black
-            "H8" piece/rook-black}})
-
 (defn square-black?
   [file rank]
   (odd? (+ (dec file) rank)))
@@ -93,20 +59,10 @@
     [:div updated-attrs
      (when piece (piece))]))
 
-(rf/reg-sub
-  :pieces
-  (fn [db _]
-    (:pieces db)))
-
-(rf/reg-sub
-  :side
-  (fn [db _]
-    (:side db)))
-
 (defn board
   []
-  (let [pieces @(rf/subscribe [:pieces])
-        side   @(rf/subscribe [:side])]
+  (let [pieces @(rf/subscribe [::sub/pieces])
+        side   @(rf/subscribe [::sub/side])]
     [:div.flex.justify-center.p-4
      [:div.grid.grid-cols-8.gap-0.border.border-black
       (for [rank (ranks side)
@@ -116,7 +72,8 @@
         ^{:key pos}
         [square
          {:id    pos
-          :class ["flex-none" "h-24" "w-24" "hover:bg-green-500/50"]}
+          :class ["flex-none" "h-24" "w-24" "hover:bg-green-500/50"]
+          :on-click (fn [_] (rf/dispatch [::event/select-square pos]))}
          file
          rank
          piece])]]))

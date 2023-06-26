@@ -2,7 +2,8 @@
   (:require
    [reagent.dom :as reagent-dom]
    [re-frame.core :as rf]
-   [simple-chess.base :as base]))
+   [simple-chess.base :as base]
+   [simple-chess.event :as event]))
 
 (defn ^:dev/after-load render
   "Render the toplevel component for this app."
@@ -11,13 +12,8 @@
     (reagent-dom/unmount-component-at-node root-el)
     (reagent-dom/render [base/board] root-el)))
 
-(rf/reg-event-db
-  ::initialize
-  (fn [_ _]
-    base/new-game-state))
-
 (defn ^:export init
   "Run application startup logic."
   []
-  (rf/dispatch-sync [::initialize])
+  (rf/dispatch-sync [::event/initialize])
   (render))

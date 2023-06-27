@@ -15,3 +15,15 @@
   ::selected
   (fn [db _]
     (:selected db)))
+
+(rf/reg-sub
+  ::moves
+  (fn [db _]
+    (:moves db)))
+
+(rf/reg-sub
+  ::highlighted-squares
+  :<- [::selected]
+  :<- [::moves]
+  (fn [[selected moves] _]
+    (into (if selected #{selected} #{}) (last moves))))

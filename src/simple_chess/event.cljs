@@ -4,7 +4,8 @@
    [simple-chess.piece :as piece]))
 
 (def new-game-state
-  {:turn   :white
+  {:moves  []
+   :turn   :white
    :side   :white
    :pieces {"A1" {:color :white :type :rook :icon-fn piece/rook-white}
             "B1" {:color :white :type :knight :icon-fn piece/knight-white}
@@ -44,32 +45,36 @@
   (fn [_ _]
     new-game-state))
 
-(defn move-piece [db [_ from to]]
-    (let [piece (get-in db [:pieces from])]
-      (-> db
-          (assoc-in [:pieces to] piece)
-          (update :pieces dissoc from))))
+(defn move-piece [{:keys [db]} [_ from to]]
+  (let [piece (get-in db [:pieces from])]
+    {:db (-> db
+             (assoc-in [:pieces to] piece)
+             (update :pieces dissoc from))
+     :fx [[:dispatch [::change-turn]]
+          [:dispatch [::log-move from to]]]}))
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::move
   move-piece)
 
 (defn select-square
   [{:keys [db]} [_ pos]]
-  (let [selected              (:selected db)
-        piece-color           (fn [pos] (get-in db [:pieces pos :color]))
-        picking-first-square? (fn [pos] (and (not selected) (get-in db [:pieces pos])))
-        unpicking?            (fn [pos] (and selected (= selected pos)))
-        repicking-piece?      (fn [pos] (and selected
-                                             (not= selected pos)
-                                             (= (piece-color selected) (piece-color pos))))]
+  (let [selected                 (:selected db)
+        piece-color              (fn [pos] (get-in db [:pieces pos :color]))
+        picking-opponents-piece? (fn [pos] (and (not selected)
+                                                (not= (:turn db) (piece-color pos))))
+        picking-own-piece?       (fn [pos] (and (not selected)
+                                                (= (:turn db) (piece-color pos))))
+        unpicking?               (fn [pos] (and selected (= selected pos)))
+        repicking-piece?         (fn [pos] (and selected
+                                                (not= selected pos)
+                                                (= (piece-color selected) (piece-color pos))))]
     (cond
-      (picking-first-square? pos) {:db (assoc db :selected pos)}
-      (unpicking? pos)            {:db (dissoc db :selected)}
-      (repicking-piece? pos)      {:db (assoc db :selected pos)}
-      :else                       {:fx [[:dispatch [::move selected pos]]
-                                        [:dispatch [::change-turn]]]
-                                   :db (dissoc db :selected)})))
+      (picking-opponents-piece? pos) nil
+      (picking-own-piece? pos)       {:db (assoc db :selected pos)}
+      (unpicking? pos)               {:db (dissoc db :selected)}
+      (repicking-piece? pos)         {:db (assoc db :selected pos)}
+      :else                          {:fx [[:dispatch [::move selected pos]]]})))
 
 (rf/reg-event-fx
   ::select-square
@@ -81,4 +86,11 @@
     (let [new-color (if (= (:turn db) :white)
                       :black
                       :white)]
-      (assoc db :turn new-color))))
+      (-> db
+          (assoc :turn new-color)
+          (dissoc :selected)))))
+
+(rf/reg-event-db
+  ::log-move
+  (fn [db [_ from to]]
+    (update db :moves (fnil conj []) [from to])))

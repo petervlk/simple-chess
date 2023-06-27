@@ -1,4 +1,4 @@
-(ns simple-chess.base
+(ns simple-chess.component
   (:require
    [simple-chess.board-util :as util]
    [simple-chess.sub :as sub]

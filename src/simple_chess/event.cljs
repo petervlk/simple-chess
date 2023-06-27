@@ -1,7 +1,8 @@
 (ns simple-chess.event
   (:require
    [re-frame.core :as rf]
-   [simple-chess.piece :as piece]))
+   [simple-chess.piece :as piece]
+   [simple-chess.move :as move]))
 
 (def new-game-state
   {:moves  []
@@ -46,12 +47,13 @@
     new-game-state))
 
 (defn move-piece [{:keys [db]} [_ from to]]
-  (let [piece (get-in db [:pieces from])]
-    {:db (-> db
-             (assoc-in [:pieces to] piece)
-             (update :pieces dissoc from))
-     :fx [[:dispatch [::change-turn]]
-          [:dispatch [::log-move from to]]]}))
+  (when (move/valid-move? (:pieces db) from to)
+    (let [piece (get-in db [:pieces from])]
+      {:db (-> db
+               (assoc-in [:pieces to] piece)
+               (update :pieces dissoc from))
+       :fx [[:dispatch [::change-turn]]
+            [:dispatch [::log-move from to]]]})))
 
 (rf/reg-event-fx
   ::move

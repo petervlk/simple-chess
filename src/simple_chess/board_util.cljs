@@ -6,6 +6,10 @@
 (def board-range-asc (range board-start-idx (inc board-dimension)))
 (def board-range-desc (range board-dimension (dec board-start-idx) -1))
 
+(defn in-board-range
+  [n]
+  (<= board-start-idx n board-dimension))
+
 (defn ranks
   [side]
   (if (= side :white)
@@ -20,12 +24,13 @@
 
 (defn coords->pos
   [file rank]
-  (-> \A
-      (.charCodeAt 0)
-      (+ file)
-      dec
-      char
-      (str rank)))
+  (when (and (in-board-range file) (in-board-range rank))
+    (-> \A
+       (.charCodeAt 0)
+       (+ file)
+       dec
+       char
+       (str rank))))
 
 (defn pos->coords
   [pos]

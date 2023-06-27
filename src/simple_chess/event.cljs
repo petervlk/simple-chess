@@ -54,26 +54,22 @@
   ::move
   move-piece)
 
-(defn same-color?
-  [db pos1 pos2]
-  (->> [pos1 pos2]
-       (map #(get-in db [:pieces % :color]))
-       (apply =)))
-
 (defn select-square
   [{:keys [db]} [_ pos]]
-  (let [selected (:selected db)]
+  (let [selected              (:selected db)
+        piece-color           (fn [pos] (get-in db [:pieces pos :color]))
+        picking-first-square? (fn [pos] (and (not selected) (get-in db [:pieces pos])))
+        unpicking?            (fn [pos] (and selected (= selected pos)))
+        repicking-piece?      (fn [pos] (and selected
+                                             (not= selected pos)
+                                             (= (piece-color selected) (piece-color pos))))]
     (cond
-      (and (nil? selected) (get-in db [:pieces pos])) {:db (assoc db :selected pos)}
-      (and selected (= selected pos))                 {:db (dissoc db :selected)}
-      (and selected
-           (not= selected pos)
-           (same-color? db selected pos))             {:db (assoc db :selected pos)}
-      (and selected
-           (not= selected pos)
-           (not (same-color? db selected pos)))       {:fx [[:dispatch [::move selected pos]]
-                                                            [:dispatch [::change-turn]]]
-                                                       :db (dissoc db :selected)})))
+      (picking-first-square? pos) {:db (assoc db :selected pos)}
+      (unpicking? pos)            {:db (dissoc db :selected)}
+      (repicking-piece? pos)      {:db (assoc db :selected pos)}
+      :else                       {:fx [[:dispatch [::move selected pos]]
+                                        [:dispatch [::change-turn]]]
+                                   :db (dissoc db :selected)})))
 
 (rf/reg-event-fx
   ::select-square

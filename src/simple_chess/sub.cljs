@@ -7,6 +7,12 @@
     (:pieces db)))
 
 (rf/reg-sub
+  ::piece
+  :<- [::pieces]
+  (fn [pieces [_ pos]]
+    (get pieces pos)))
+
+(rf/reg-sub
   ::side
   (fn [db _]
     (:side db)))
@@ -22,8 +28,8 @@
     (:moves db)))
 
 (rf/reg-sub
-  ::highlighted-squares
+  ::highlighted-square?
   :<- [::selected]
   :<- [::moves]
-  (fn [[selected moves] _]
-    (into (if selected #{selected} #{}) (last moves))))
+  (fn [[selected moves] [_ pos]]
+    (or (= pos selected) (some #(= pos %) (last moves)))))

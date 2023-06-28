@@ -1,30 +1,13 @@
 (ns simple-chess.move
   (:require [simple-chess.board-util :as util]))
 
-(defn square-piece
-  [pieces file rank]
-  (get pieces (util/coords->pos file rank)))
-
-(defn empty-square?
-  [pieces file rank]
-  (nil? (square-piece pieces file rank)))
-
-(defn allied-square?
-  [color pieces pos]
-  (and (= color (:color (get pieces pos))) pos))
-
-(defn opponent-square?
-  [color pieces pos]
-  (let [piece (get pieces pos)]
-    (and piece (not= color (:color piece)) pos)))
-
 (defn empty-squares-in-direction
   [direction pieces pos]
   (->> pos
        util/pos->coords
        (iterate #(map + % direction))
        (drop 1)
-       (take-while #(and (apply util/valid-coords? %) (apply empty-square? pieces %)))
+       (take-while #(and (apply util/valid-coords? %) (apply util/empty-square? pieces %)))
        (mapv (partial apply util/coords->pos))))
 
 (defn attacked-squares
@@ -36,7 +19,7 @@
                            util/pos->coords
                            (map + direction)
                            (apply util/coords->pos)
-                           (opponent-square? color pieces))]
+                           (util/opponent-square? color pieces))]
     (if attacked-pos
       (conj empty-squares attacked-pos)
       empty-squares)))
@@ -45,22 +28,20 @@
   [pieces pos]
   (let [[file rank]        (util/pos->coords pos)
         color              (get-in pieces [pos :color])
-        step               (if (= color :white) inc dec)
         starting-position? (or (and (= color :white) (= rank 2))
                                (and (= color :black) (= rank (dec util/board-dimension))))
-        opponents-piece    (fn [file rank]
-                             (let [piece (square-piece pieces file rank)]
-                               (and piece (not= color (:color piece)))))
-        forward-moves      (->> rank
-                                (iterate step)
-                                (drop 1)
-                                (take-while (partial empty-square? pieces file))
-                                (take (if starting-position? 2 1))
-                                (map #(util/coords->pos file %))
+        direction          (if (= color :white) [0 1] [0 -1])
+        max-distance       (if starting-position? 2 1)
+        forward-moves      (->> (empty-squares-in-direction direction pieces pos)
+                                (take max-distance)
                                 (into #{}))]
-    (cond-> forward-moves
-      (opponents-piece (inc file) (step rank)) (conj (util/coords->pos (inc file) (step rank)))
-      (opponents-piece (dec file) (step rank)) (conj (util/coords->pos (dec file) (step rank))))))
+    (->> [inc dec]
+         (map #(vector (% file) rank))
+         (map #(map + direction %))
+         (map (partial apply util/coords->pos))
+         (map (partial util/opponent-square? color pieces))
+         (remove nil?)
+         (into forward-moves))))
 
 (defn knight-moves
   [pieces pos]
@@ -71,7 +52,7 @@
          (mapv #(map + % coords))
          (map (partial apply util/coords->pos))
          (remove nil?)
-         (remove (partial allied-square? color pieces))
+         (remove (partial util/allied-square? color pieces))
          (into #{}))))
 
 (defn long-distance-piece
@@ -92,13 +73,25 @@
   [pieces pos]
   (long-distance-piece pieces pos [[1 1] [1 -1] [-1 1] [-1 -1] [0 1] [0 -1] [1 0] [-1 0]]))
 
+(defn king-moves
+  [pieces pos]
+  (let [color  (get-in pieces [pos :color])
+        coords (util/pos->coords pos)]
+    (->> [[1 1] [1 -1] [-1 1] [-1 -1] [0 1] [0 -1] [1 0] [-1 0]]
+         (map #(map + coords %))
+         (map (partial apply util/coords->pos))
+         (remove nil?)
+         (remove (partial util/allied-square? color pieces))
+         (into #{}))))
+
 (defn valid-move?
   [pieces from to]
   (let [piece (get pieces from)]
     (cond
-      (= (:type piece) :pawn )  ((pawn-moves pieces from) to)
+      (= (:type piece) :pawn)   ((pawn-moves pieces from) to)
       (= (:type piece) :knight) ((knight-moves pieces from) to)
-      (= (:type piece) :rook)   ((rook-moves pieces from) to)
       (= (:type piece) :bishop) ((bishop-moves pieces from) to)
+      (= (:type piece) :rook)   ((rook-moves pieces from) to)
       (= (:type piece) :queen)  ((queen-moves pieces from) to)
+      (= (:type piece) :king)   ((king-moves pieces from) to)
       :else                     true)))

@@ -31,7 +31,7 @@
 
 (defn coords->pos
   [file rank]
-  (when (and (in-board-range file) (in-board-range rank))
+  (when (valid-coords? file rank)
     (-> \A
        (.charCodeAt 0)
        (+ file)
@@ -48,3 +48,20 @@
 (defn square-black?
   [file rank]
   (odd? (+ (dec file) rank)))
+
+(defn square-piece
+  [pieces file rank]
+  (get pieces (coords->pos file rank)))
+
+(defn empty-square?
+  [pieces file rank]
+  (nil? (square-piece pieces file rank)))
+
+(defn allied-square?
+  [color pieces pos]
+  (and (= color (:color (get pieces pos))) pos))
+
+(defn opponent-square?
+  [color pieces pos]
+  (let [piece (get pieces pos)]
+    (and piece (not= color (:color piece)) pos)))

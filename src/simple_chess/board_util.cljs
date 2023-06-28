@@ -10,6 +10,13 @@
   [n]
   (<= board-start-idx n board-dimension))
 
+(defn valid-coords?
+  [file rank]
+  (and
+    (in-board-range file)
+    (in-board-range rank)
+    [file rank]))
+
 (defn ranks
   [side]
   (if (= side :white)

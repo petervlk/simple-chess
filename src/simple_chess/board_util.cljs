@@ -38,9 +38,11 @@
        char))
 
 (defn coords->pos
-  [file rank]
-  (when (valid-coords? file rank)
-    (str (file->str file) rank)))
+  ([[file rank]]
+   (coords->pos file rank))
+  ([file rank]
+   (when (valid-coords? file rank)
+     (str (file->str file) rank))))
 
 (defn pos->coords
   [pos]

@@ -8,7 +8,7 @@
        (iterate #(map + % direction))
        (drop 1)
        (take-while #(and (apply util/valid-coords? %) (apply util/empty-square? pieces %)))
-       (mapv (partial apply util/coords->pos))))
+       (mapv util/coords->pos)))
 
 (defn attacked-squares
   [pieces pos direction]
@@ -18,7 +18,7 @@
                            (or (last empty-squares))
                            util/pos->coords
                            (map + direction)
-                           (apply util/coords->pos)
+                           util/coords->pos
                            (util/opponent-square? color pieces))]
     (if attacked-pos
       (conj empty-squares attacked-pos)
@@ -38,7 +38,7 @@
     (->> [inc dec]
          (map #(vector (% file) rank))
          (map #(map + direction %))
-         (map (partial apply util/coords->pos))
+         (map util/coords->pos)
          (map (partial util/opponent-square? color pieces))
          (remove nil?)
          (into forward-moves))))
@@ -50,7 +50,7 @@
         coords (util/pos->coords pos)]
     (->> moves
          (mapv #(map + % coords))
-         (map (partial apply util/coords->pos))
+         (map util/coords->pos)
          (remove nil?)
          (remove (partial util/allied-square? color pieces))
          (into #{}))))
@@ -79,7 +79,7 @@
         coords (util/pos->coords pos)]
     (->> [[1 1] [1 -1] [-1 1] [-1 -1] [0 1] [0 -1] [1 0] [-1 0]]
          (map #(map + coords %))
-         (map (partial apply util/coords->pos))
+         (map util/coords->pos)
          (remove nil?)
          (remove (partial util/allied-square? color pieces))
          (into #{}))))

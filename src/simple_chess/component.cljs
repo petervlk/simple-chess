@@ -3,14 +3,15 @@
    [simple-chess.board-util :as util]
    [simple-chess.sub :as sub]
    [simple-chess.event :as event]
-   [re-frame.core :as rf]))
+   [re-frame.core :as rf]
+   [clojure.string :as str]))
 
 (defn square-colors
   [file rank highlighted?]
   (cond
-    highlighted?                   ["bg-yellow-300"]
-    (util/square-black? file rank) ["bg-[#769656]"]
-    :else                          ["bg-[#efeed3]"]))
+    highlighted?                   ["bg-yellow-300" "text-[#769656]"]
+    (util/square-black? file rank) ["bg-[#769656]" "text-[#efeed3]"]
+    :else                          ["bg-[#efeed3]" "text-[#769656]"]))
 
 (defn square-attrs
   [attrs-base pos colors]
@@ -27,7 +28,15 @@
         colors        (square-colors file rank highlighted?)
         updated-attrs (square-attrs attrs pos colors)]
     [:div updated-attrs
-     (when piece ((:icon-fn piece)))]))
+     (when piece ((:icon-fn piece)))
+     (when (= rank 1)
+       [:span
+        {:class ["font-mono" "font-extrabold" "absolute" "bottom-0" "right-1"]}
+        (str/lower-case (util/file->str file))])
+     (when (= file 1)
+       [:span
+        {:class ["font-mono" "font-extrabold" "absolute" "top-0" "left-1"]}
+        rank])]))
 
 (defn board
   []
@@ -37,4 +46,4 @@
       (for [rank (util/ranks side)
             file (util/files side)]
         ^{:key {:rank rank :file file}}
-        [square {:class ["flex-none" "h-24" "w-24"]} file rank])]]))
+        [square {:class ["flex-none" "h-24" "w-24" "relative"]} file rank])]]))

@@ -29,15 +29,18 @@
     board-range-asc
     board-range-desc))
 
-(defn coords->pos
-  [file rank]
-  (when (valid-coords? file rank)
-    (-> \A
+(defn file->str
+  [file]
+  (-> \A
        (.charCodeAt 0)
        (+ file)
        dec
-       char
-       (str rank))))
+       char))
+
+(defn coords->pos
+  [file rank]
+  (when (valid-coords? file rank)
+    (str (file->str file) rank)))
 
 (defn pos->coords
   [pos]

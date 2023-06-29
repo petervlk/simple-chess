@@ -55,18 +55,18 @@
   (odd? (+ (dec file) rank)))
 
 (defn square-piece
-  [pieces file rank]
-  (get pieces (coords->pos file rank)))
+  [board file rank]
+  (get board (coords->pos file rank)))
 
 (defn empty-square?
-  [pieces file rank]
-  (nil? (square-piece pieces file rank)))
+  [board file rank]
+  (nil? (square-piece board file rank)))
 
 (defn allied-square?
-  [color pieces pos]
-  (and (= color (:color (get pieces pos))) pos))
+  [color board pos]
+  (and (= color (:color (get board pos))) pos))
 
 (defn opponent-square?
-  [color pieces pos]
-  (let [piece (get pieces pos)]
+  [color board pos]
+  (let [piece (get board pos)]
     (and piece (not= color (:color piece)) pos)))

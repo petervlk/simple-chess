@@ -2,15 +2,15 @@
   (:require [re-frame.core :as rf]))
 
 (rf/reg-sub
-  ::pieces
+  ::board
   (fn [db _]
-    (:pieces db)))
+    (:board db)))
 
 (rf/reg-sub
   ::piece
-  :<- [::pieces]
-  (fn [pieces [_ pos]]
-    (get pieces pos)))
+  :<- [::board]
+  (fn [board [_ pos]]
+    (get board pos)))
 
 (rf/reg-sub
   ::side

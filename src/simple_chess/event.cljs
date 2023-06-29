@@ -8,7 +8,7 @@
   {:moves  []
    :turn   :white
    :side   :white
-   :pieces initial-board-config})
+   :board initial-board-config})
 
 (rf/reg-event-db
   ::initialize
@@ -16,11 +16,11 @@
     new-game-state))
 
 (defn move-piece [{:keys [db]} [_ from to]]
-  (when (move/valid-move? (:pieces db) from to)
-    (let [piece (get-in db [:pieces from])]
+  (when (move/valid-move? (:board db) from to)
+    (let [piece (get-in db [:board from])]
       {:db (-> db
-               (assoc-in [:pieces to] piece)
-               (update :pieces dissoc from))
+               (assoc-in [:board to] piece)
+               (update :board dissoc from))
        :fx [[:dispatch [::change-turn]]
             [:dispatch [::log-move from to]]]})))
 
@@ -31,7 +31,7 @@
 (defn select-square
   [{:keys [db]} [_ pos]]
   (let [selected                 (:selected db)
-        piece-color              (fn [pos] (get-in db [:pieces pos :color]))
+        piece-color              (fn [pos] (get-in db [:board pos :color]))
         picking-opponents-piece? (fn [pos] (and (not selected)
                                                 (not= (:turn db) (piece-color pos))))
         picking-own-piece?       (fn [pos] (and (not selected)

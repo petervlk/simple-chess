@@ -7,24 +7,24 @@
 (def all-directions (into rook-directions bishop-directions))
 
 (defn empty-squares-in-direction
-  [direction pieces pos]
+  [direction board pos]
   (->> pos
        util/pos->coords
        (iterate #(map + % direction))
        (drop 1)
-       (take-while #(and (apply util/valid-coords? %) (apply util/empty-square? pieces %)))
+       (take-while #(and (apply util/valid-coords? %) (apply util/empty-square? board %)))
        (mapv util/coords->pos)))
 
 (defn attacked-squares
-  [pieces pos direction]
-  (let [color         (get-in pieces [pos :color])
-        empty-squares (empty-squares-in-direction direction pieces pos)
+  [board pos direction]
+  (let [color         (get-in board [pos :color])
+        empty-squares (empty-squares-in-direction direction board pos)
         attacked-pos  (->> pos
                            (or (last empty-squares))
                            util/pos->coords
                            (map + direction)
                            util/coords->pos
-                           (util/opponent-square? color pieces))]
+                           (util/opponent-square? color board))]
     (if attacked-pos
       (conj empty-squares attacked-pos)
       empty-squares)))
@@ -39,37 +39,37 @@
   (if (= color :white) [0 1] [0 -1]))
 
 (defn pawn-moves
-  [pieces pos]
+  [board pos]
   (let [coords          (util/pos->coords pos)
-        color           (get-in pieces [pos :color])
+        color           (get-in board [pos :color])
         direction       (pawn-movement-direction color)
         max-distance    (if (pawn-in-starting-pos? color coords) 2 1)
-        forward-moves   (->> (empty-squares-in-direction direction pieces pos)
+        forward-moves   (->> (empty-squares-in-direction direction board pos)
                              (take max-distance)
                              (into #{}))
         attacking-moves (->> [[1 0] [-1 0]]
                              (map #(map + coords direction %))
                              (map util/coords->pos)
-                             (map (partial util/opponent-square? color pieces))
+                             (map (partial util/opponent-square? color board))
                              (remove nil?))]
     (into forward-moves attacking-moves)))
 
 (defn knight-moves
-  [pieces pos]
-  (let [color  (get-in pieces [pos :color])
+  [board pos]
+  (let [color  (get-in board [pos :color])
         coords (util/pos->coords pos)]
     (->> knight-jumps
          (mapv #(map + % coords))
          (map util/coords->pos)
          (remove nil?)
-         (remove (partial util/allied-square? color pieces))
+         (remove (partial util/allied-square? color board))
          (into #{}))))
 
 (defn long-distance-moves
   [directions]
-  (fn [pieces pos]
+  (fn [board pos]
     (->> directions
-         (mapcat (partial attacked-squares pieces pos))
+         (mapcat (partial attacked-squares board pos))
          (into #{}))))
 
 (def rook-moves (long-distance-moves rook-directions))
@@ -77,22 +77,22 @@
 (def queen-moves (long-distance-moves all-directions))
 
 (defn king-moves
-  [pieces pos]
-  (let [color  (get-in pieces [pos :color])
+  [board pos]
+  (let [color  (get-in board [pos :color])
         coords (util/pos->coords pos)]
     (->> all-directions
          (map #(map + coords %))
          (map util/coords->pos)
          (remove nil?)
-         (remove (partial util/allied-square? color pieces))
+         (remove (partial util/allied-square? color board))
          (into #{}))))
 
 (defn valid-move?
-  [pieces from to]
-  (case (get-in pieces [from :type])
-    :pawn   ((pawn-moves pieces from) to)
-    :knight ((knight-moves pieces from) to)
-    :bishop ((bishop-moves pieces from) to)
-    :rook   ((rook-moves pieces from) to)
-    :queen  ((queen-moves pieces from) to)
-    :king   ((king-moves pieces from) to)))
+  [board from to]
+  (case (get-in board [from :type])
+    :pawn   ((pawn-moves board from) to)
+    :knight ((knight-moves board from) to)
+    :bishop ((bishop-moves board from) to)
+    :rook   ((rook-moves board from) to)
+    :queen  ((queen-moves board from) to)
+    :king   ((king-moves board from) to)))

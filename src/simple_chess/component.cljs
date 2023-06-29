@@ -1,10 +1,25 @@
 (ns simple-chess.component
   (:require
-   [simple-chess.board-util :as util]
-   [simple-chess.sub :as sub]
-   [simple-chess.event :as event]
+   [clojure.string :as str]
    [re-frame.core :as rf]
-   [clojure.string :as str]))
+   [simple-chess.board-util :as util]
+   [simple-chess.event :as event]
+   [simple-chess.piece :as piece]
+   [simple-chess.sub :as sub]))
+
+(def icons
+  {{:color :white :type :rook}   piece/rook-white
+   {:color :white :type :knight} piece/knight-white
+   {:color :white :type :bishop} piece/bishop-white
+   {:color :white :type :queen}  piece/queen-white
+   {:color :white :type :king}   piece/king-white
+   {:color :white :type :pawn}   piece/pawn-white
+   {:color :black :type :pawn}   piece/pawn-black
+   {:color :black :type :rook}   piece/rook-black
+   {:color :black :type :knight} piece/knight-black
+   {:color :black :type :bishop} piece/bishop-black
+   {:color :black :type :queen}  piece/queen-black
+   {:color :black :type :king}   piece/king-black})
 
 (defn square-colors
   [file rank highlighted?]
@@ -24,11 +39,12 @@
   [attrs file rank]
   (let [pos           (util/coords->pos file rank)
         piece         @(rf/subscribe [::sub/piece pos])
+        icon          (get icons piece)
         highlighted?  @(rf/subscribe [::sub/highlighted-square? pos])
         colors        (square-colors file rank highlighted?)
         updated-attrs (square-attrs attrs pos colors)]
     [:div updated-attrs
-     (when piece ((:icon-fn piece)))
+     (when icon [icon])
      (when (= rank 1)
        [:span
         {:class ["font-mono" "font-extrabold" "absolute" "bottom-0" "right-1"]}

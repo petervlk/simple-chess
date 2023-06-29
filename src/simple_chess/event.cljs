@@ -1,45 +1,44 @@
 (ns simple-chess.event
   (:require
    [re-frame.core :as rf]
-   [simple-chess.piece :as piece]
    [simple-chess.move :as move]))
 
 (def new-game-state
   {:moves  []
    :turn   :white
    :side   :white
-   :pieces {"A1" {:color :white :type :rook :icon-fn piece/rook-white}
-            "B1" {:color :white :type :knight :icon-fn piece/knight-white}
-            "C1" {:color :white :type :bishop :icon-fn piece/bishop-white}
-            "D1" {:color :white :type :queen :icon-fn piece/queen-white}
-            "E1" {:color :white :type :king :icon-fn piece/king-white}
-            "F1" {:color :white :type :bishop :icon-fn piece/bishop-white}
-            "G1" {:color :white :type :knight :icon-fn piece/knight-white}
-            "H1" {:color :white :type :rook :icon-fn piece/rook-white}
-            "A2" {:color :white :type :pawn :icon-fn piece/pawn-white}
-            "B2" {:color :white :type :pawn :icon-fn piece/pawn-white}
-            "C2" {:color :white :type :pawn :icon-fn piece/pawn-white}
-            "D2" {:color :white :type :pawn :icon-fn piece/pawn-white}
-            "E2" {:color :white :type :pawn :icon-fn piece/pawn-white}
-            "F2" {:color :white :type :pawn :icon-fn piece/pawn-white}
-            "G2" {:color :white :type :pawn :icon-fn piece/pawn-white}
-            "H2" {:color :white :type :pawn :icon-fn piece/pawn-white}
-            "A7" {:color :black :type :pawn :icon-fn piece/pawn-black}
-            "B7" {:color :black :type :pawn :icon-fn piece/pawn-black}
-            "C7" {:color :black :type :pawn :icon-fn piece/pawn-black}
-            "D7" {:color :black :type :pawn :icon-fn piece/pawn-black}
-            "E7" {:color :black :type :pawn :icon-fn piece/pawn-black}
-            "F7" {:color :black :type :pawn :icon-fn piece/pawn-black}
-            "G7" {:color :black :type :pawn :icon-fn piece/pawn-black}
-            "H7" {:color :black :type :pawn :icon-fn piece/pawn-black}
-            "A8" {:color :black :type :rook :icon-fn piece/rook-black}
-            "B8" {:color :black :type :knight :icon-fn piece/knight-black}
-            "C8" {:color :black :type :bishop :icon-fn piece/bishop-black}
-            "D8" {:color :black :type :queen :icon-fn piece/queen-black}
-            "E8" {:color :black :type :king :icon-fn piece/king-black}
-            "F8" {:color :black :type :bishop :icon-fn piece/bishop-black}
-            "G8" {:color :black :type :knight :icon-fn piece/knight-black}
-            "H8" {:color :black :type :rook :icon-fn piece/rook-black}}})
+   :pieces {"A1" {:color :white :type :rook}
+            "B1" {:color :white :type :knight}
+            "C1" {:color :white :type :bishop}
+            "D1" {:color :white :type :queen}
+            "E1" {:color :white :type :king}
+            "F1" {:color :white :type :bishop}
+            "G1" {:color :white :type :knight}
+            "H1" {:color :white :type :rook}
+            "A2" {:color :white :type :pawn}
+            "B2" {:color :white :type :pawn}
+            "C2" {:color :white :type :pawn}
+            "D2" {:color :white :type :pawn}
+            "E2" {:color :white :type :pawn}
+            "F2" {:color :white :type :pawn}
+            "G2" {:color :white :type :pawn}
+            "H2" {:color :white :type :pawn}
+            "A7" {:color :black :type :pawn}
+            "B7" {:color :black :type :pawn}
+            "C7" {:color :black :type :pawn}
+            "D7" {:color :black :type :pawn}
+            "E7" {:color :black :type :pawn}
+            "F7" {:color :black :type :pawn}
+            "G7" {:color :black :type :pawn}
+            "H7" {:color :black :type :pawn}
+            "A8" {:color :black :type :rook}
+            "B8" {:color :black :type :knight}
+            "C8" {:color :black :type :bishop}
+            "D8" {:color :black :type :queen}
+            "E8" {:color :black :type :king}
+            "F8" {:color :black :type :bishop}
+            "G8" {:color :black :type :knight}
+            "H8" {:color :black :type :rook}}})
 
 (rf/reg-event-db
   ::initialize

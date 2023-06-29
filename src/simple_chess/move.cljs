@@ -24,24 +24,30 @@
       (conj empty-squares attacked-pos)
       empty-squares)))
 
+(defn pawn-in-starting-pos?
+  [color [_file rank]]
+  (or (and (= color :white) (= rank 2))
+      (and (= color :black) (= rank (dec util/board-dimension)))))
+
+(defn pawn-movement-direction
+  [color]
+  (if (= color :white) [0 1] [0 -1]))
+
 (defn pawn-moves
   [pieces pos]
-  (let [[file rank]        (util/pos->coords pos)
-        color              (get-in pieces [pos :color])
-        starting-position? (or (and (= color :white) (= rank 2))
-                               (and (= color :black) (= rank (dec util/board-dimension))))
-        direction          (if (= color :white) [0 1] [0 -1])
-        max-distance       (if starting-position? 2 1)
-        forward-moves      (->> (empty-squares-in-direction direction pieces pos)
+  (let [coords          (util/pos->coords pos)
+        color           (get-in pieces [pos :color])
+        direction       (pawn-movement-direction color)
+        max-distance    (if (pawn-in-starting-pos? color coords) 2 1)
+        forward-moves   (->> (empty-squares-in-direction direction pieces pos)
                                 (take max-distance)
-                                (into #{}))]
-    (->> [inc dec]
-         (map #(vector (% file) rank))
-         (map #(map + direction %))
-         (map util/coords->pos)
-         (map (partial util/opponent-square? color pieces))
-         (remove nil?)
-         (into forward-moves))))
+                                (into #{}))
+        attacking-moves (->> [[1 0] [-1 0]]
+                             (map #(map + coords direction %))
+                             (map util/coords->pos)
+                             (map (partial util/opponent-square? color pieces))
+                             (remove nil?))]
+    (into forward-moves attacking-moves)))
 
 (defn knight-moves
   [pieces pos]

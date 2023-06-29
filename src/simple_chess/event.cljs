@@ -2,7 +2,8 @@
   (:require
    [re-frame.core :as rf]
    [simple-chess.move :as move]
-   [simple-chess.constants :refer [initial-board-config]]))
+   [simple-chess.constants :refer [initial-board-config]]
+   [simple-chess.board-util :as util]))
 
 (def new-game-state
   {:moves  []
@@ -17,12 +18,18 @@
 
 (defn move-piece [{:keys [db]} [_ from to]]
   (when (move/valid-move? (:board db) from to)
-    (let [piece (get-in db [:board from])]
-      {:db (-> db
-               (assoc-in [:board to] piece)
-               (update :board dissoc from))
-       :fx [[:dispatch [::change-turn]]
-            [:dispatch [::log-move from to]]]})))
+    (let [piece      (get-in db [:board from])
+          promotion? (and (= :pawn (:type piece)) (util/promotion-rank? to))
+          fxs-base   [[:dispatch [::change-turn]]
+                      [:dispatch [::log-move from to]]]
+          fxs        (if promotion?
+                       (conj fxs-base [:dispatch [::promote to]])
+                       fxs-base)
+          new-db     (-> db
+                         (assoc-in [:board to] piece)
+                         (update :board dissoc from))]
+      {:db new-db
+       :fx fxs})))
 
 (rf/reg-event-fx
   ::move
@@ -60,6 +67,11 @@
       (-> db
           (assoc :turn new-color)
           (dissoc :selected)))))
+
+(rf/reg-event-db
+  ::promote
+  (fn [db [_ pos]]
+    (assoc-in db [:board pos :type] :queen)))
 
 (rf/reg-event-db
   ::log-move

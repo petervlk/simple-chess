@@ -70,3 +70,9 @@
   [color board pos]
   (let [piece (get board pos)]
     (and piece (not= color (:color piece)) pos)))
+
+(defn promotion-rank?
+  [pos]
+  (-> pos
+      second
+      #{"1" "8"}))

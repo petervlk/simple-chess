@@ -1,5 +1,6 @@
 (ns simple-chess.move
-  (:require [simple-chess.board-util :as util]))
+  (:require[simple-chess.board-util :as util]
+           [simple-chess.constants :as const]))
 
 (def knight-jumps [[-2 -1] [-2 1] [-1 -2] [-1 2] [1 -2] [1 2] [2 -1] [2 1]])
 (def rook-directions [[0 1] [0 -1] [1 0] [-1 0]])
@@ -32,7 +33,7 @@
 (defn pawn-in-starting-pos?
   [color [_file rank]]
   (or (and (= color :white) (= rank 2))
-      (and (= color :black) (= rank (dec util/board-dimension)))))
+      (and (= color :black) (= rank (dec const/board-dimension)))))
 
 (defn pawn-movement-direction
   [color]

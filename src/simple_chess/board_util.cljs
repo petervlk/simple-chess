@@ -1,14 +1,9 @@
-(ns simple-chess.board-util)
-
-(def board-dimension 8)
-(def board-start-idx 1)
-
-(def board-range-asc (range board-start-idx (inc board-dimension)))
-(def board-range-desc (range board-dimension (dec board-start-idx) -1))
+(ns simple-chess.board-util
+  (:require [simple-chess.constants :as consts]))
 
 (defn in-board-range
   [n]
-  (<= board-start-idx n board-dimension))
+  (<= consts/board-start-idx n consts/board-dimension))
 
 (defn valid-coords?
   [file rank]
@@ -20,14 +15,14 @@
 (defn ranks
   [side]
   (if (= side :white)
-    board-range-desc
-    board-range-asc))
+    consts/board-range-desc
+    consts/board-range-asc))
 
 (defn files
   [side]
   (if (= side :white)
-    board-range-asc
-    board-range-desc))
+    consts/board-range-asc
+    consts/board-range-desc))
 
 (defn file->str
   [file]

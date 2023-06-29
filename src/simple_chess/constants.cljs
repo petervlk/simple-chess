@@ -1,5 +1,11 @@
 (ns simple-chess.constants)
 
+(def board-dimension 8)
+(def board-start-idx 1)
+
+(def board-range-asc (range board-start-idx (inc board-dimension)))
+(def board-range-desc (range board-dimension (dec board-start-idx) -1))
+
 (def rook-white-attrs   {:color :white :type :rook})
 (def knight-white-attrs {:color :white :type :knight})
 (def bishop-white-attrs {:color :white :type :bishop})

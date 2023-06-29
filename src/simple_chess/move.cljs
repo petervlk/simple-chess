@@ -1,6 +1,11 @@
 (ns simple-chess.move
   (:require [simple-chess.board-util :as util]))
 
+(def knight-jumps [[-2 -1] [-2 1] [-1 -2] [-1 2] [1 -2] [1 2] [2 -1] [2 1]])
+(def rook-directions [[0 1] [0 -1] [1 0] [-1 0]])
+(def bishop-directions [[1 1] [1 -1] [-1 1] [-1 -1]])
+(def all-directions (into rook-directions bishop-directions))
+
 (defn empty-squares-in-direction
   [direction pieces pos]
   (->> pos
@@ -40,8 +45,8 @@
         direction       (pawn-movement-direction color)
         max-distance    (if (pawn-in-starting-pos? color coords) 2 1)
         forward-moves   (->> (empty-squares-in-direction direction pieces pos)
-                                (take max-distance)
-                                (into #{}))
+                             (take max-distance)
+                             (into #{}))
         attacking-moves (->> [[1 0] [-1 0]]
                              (map #(map + coords direction %))
                              (map util/coords->pos)
@@ -51,39 +56,31 @@
 
 (defn knight-moves
   [pieces pos]
-  (let [moves  [[-2 -1] [-2 1] [-1 -2] [-1 2] [1 -2] [1 2] [2 -1] [2 1]]
-        color  (get-in pieces [pos :color])
+  (let [color  (get-in pieces [pos :color])
         coords (util/pos->coords pos)]
-    (->> moves
+    (->> knight-jumps
          (mapv #(map + % coords))
          (map util/coords->pos)
          (remove nil?)
          (remove (partial util/allied-square? color pieces))
          (into #{}))))
 
-(defn long-distance-piece
-  [pieces pos directions]
-  (->> directions
-       (mapcat (partial attacked-squares pieces pos))
-       (into #{})))
+(defn long-distance-moves
+  [directions]
+  (fn [pieces pos]
+    (->> directions
+         (mapcat (partial attacked-squares pieces pos))
+         (into #{}))))
 
-(defn rook-moves
-  [pieces pos]
-  (long-distance-piece pieces pos [[0 1] [0 -1] [1 0] [-1 0]]))
-
-(defn bishop-moves
-  [pieces pos]
-  (long-distance-piece pieces pos [[1 1] [1 -1] [-1 1] [-1 -1]]))
-
-(defn queen-moves
-  [pieces pos]
-  (long-distance-piece pieces pos [[1 1] [1 -1] [-1 1] [-1 -1] [0 1] [0 -1] [1 0] [-1 0]]))
+(def rook-moves (long-distance-moves rook-directions))
+(def bishop-moves (long-distance-moves bishop-directions))
+(def queen-moves (long-distance-moves all-directions))
 
 (defn king-moves
   [pieces pos]
   (let [color  (get-in pieces [pos :color])
         coords (util/pos->coords pos)]
-    (->> [[1 1] [1 -1] [-1 1] [-1 -1] [0 1] [0 -1] [1 0] [-1 0]]
+    (->> all-directions
          (map #(map + coords %))
          (map util/coords->pos)
          (remove nil?)
@@ -92,12 +89,10 @@
 
 (defn valid-move?
   [pieces from to]
-  (let [piece (get pieces from)]
-    (cond
-      (= (:type piece) :pawn)   ((pawn-moves pieces from) to)
-      (= (:type piece) :knight) ((knight-moves pieces from) to)
-      (= (:type piece) :bishop) ((bishop-moves pieces from) to)
-      (= (:type piece) :rook)   ((rook-moves pieces from) to)
-      (= (:type piece) :queen)  ((queen-moves pieces from) to)
-      (= (:type piece) :king)   ((king-moves pieces from) to)
-      :else                     true)))
+  (case (get-in pieces [from :type])
+    :pawn   ((pawn-moves pieces from) to)
+    :knight ((knight-moves pieces from) to)
+    :bishop ((bishop-moves pieces from) to)
+    :rook   ((rook-moves pieces from) to)
+    :queen  ((queen-moves pieces from) to)
+    :king   ((king-moves pieces from) to)))

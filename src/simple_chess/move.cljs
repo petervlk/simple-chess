@@ -39,21 +39,37 @@
   [color]
   (if (= color :white) [0 1] [0 -1]))
 
+(defn en-passant-possible?
+  [board moves pos]
+  (let [white-move?       (= :white (get-in board [pos :color]))
+        prev-move         (last moves)
+        prev-move-end-pos (second prev-move)
+        prev-move-coords  (map util/pos->coords prev-move)
+        prev-move-file    (ffirst prev-move-coords)
+        coords            (util/pos->coords pos)]
+    (and (= :pawn (get-in board [prev-move-end-pos :type]))
+         (= (mapv second prev-move-coords) (if white-move? [7 5] [2 4]))
+         (= 1 (Math/abs (- (first coords) prev-move-file)))
+         (if white-move? [prev-move-file 6] [prev-move-file 3]))))
+
+
 (defn pawn-moves
-  [board pos]
+  [board moves pos]
   (let [coords          (util/pos->coords pos)
         color           (get-in board [pos :color])
         direction       (pawn-movement-direction color)
         max-distance    (if (pawn-in-starting-pos? color coords) 2 1)
-        forward-moves   (->> (empty-squares-in-direction direction board pos)
-                             (take max-distance)
-                             (into #{}))
+        en-passant-move (en-passant-possible? board moves pos)
+        forward-moves   (take max-distance (empty-squares-in-direction direction board pos))
         attacking-moves (->> [[1 0] [-1 0]]
                              (map #(map + coords direction %))
                              (map util/coords->pos)
                              (map (partial util/opponent-square? color board))
                              (remove nil?))]
-    (into forward-moves attacking-moves)))
+    (cond-> #{}
+      forward-moves   (into forward-moves)
+      attacking-moves (into attacking-moves)
+      en-passant-move (into (vector (util/coords->pos en-passant-move))))))
 
 (defn knight-moves
   [board pos]
@@ -89,9 +105,9 @@
          (into #{}))))
 
 (defn valid-move?
-  [board from to]
+  [board moves from to]
   (case (get-in board [from :type])
-    :pawn   ((pawn-moves board from) to)
+    :pawn   ((pawn-moves board moves from) to)
     :knight ((knight-moves board from) to)
     :bishop ((bishop-moves board from) to)
     :rook   ((rook-moves board from) to)

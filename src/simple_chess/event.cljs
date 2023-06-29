@@ -17,19 +17,20 @@
     new-game-state))
 
 (defn move-piece [{:keys [db]} [_ from to]]
-  (when (move/valid-move? (:board db) from to)
-    (let [piece      (get-in db [:board from])
-          promotion? (and (= :pawn (:type piece)) (util/promotion-rank? to))
-          fxs-base   [[:dispatch [::change-turn]]
-                      [:dispatch [::log-move from to]]]
-          fxs        (if promotion?
-                       (conj fxs-base [:dispatch [::promote to]])
-                       fxs-base)
-          new-db     (-> db
-                         (assoc-in [:board to] piece)
-                         (update :board dissoc from))]
-      {:db new-db
-       :fx fxs})))
+  (when (move/valid-move? (:board db) (:moves db) from to)
+    (let [piece       (get-in db [:board from])
+          promotion?  (and (= :pawn (:type piece)) (util/promotion-rank? to))
+          en-passant? (and (= :pawn (:type piece))
+                           (not= (first from) (first to))
+                           (nil? (get-in db [:board to])))]
+      {:db (-> db
+               (assoc-in [:board to] piece)
+               (update :board dissoc from))
+       :fx (cond->
+               [[:dispatch [::change-turn]]
+                [:dispatch [::log-move from to]]]
+             promotion?  (conj [:dispatch [::promote to]])
+             en-passant? (conj [:dispatch [::en-passant from to]]))})))
 
 (rf/reg-event-fx
   ::move
@@ -72,6 +73,11 @@
   ::promote
   (fn [db [_ pos]]
     (assoc-in db [:board pos :type] :queen)))
+
+(rf/reg-event-db
+  ::en-passant
+  (fn [db [_ from to]]
+    (update db :board dissoc (util/en-passant-pos from to))))
 
 (rf/reg-event-db
   ::log-move

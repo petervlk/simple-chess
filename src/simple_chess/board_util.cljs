@@ -71,3 +71,7 @@
   (-> pos
       second
       #{"1" "8"}))
+
+(defn en-passant-pos
+  [from to]
+  (str (first to) (second from)))

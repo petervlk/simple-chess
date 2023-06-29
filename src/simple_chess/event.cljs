@@ -1,44 +1,14 @@
 (ns simple-chess.event
   (:require
    [re-frame.core :as rf]
-   [simple-chess.move :as move]))
+   [simple-chess.move :as move]
+   [simple-chess.constants :refer [initial-board-config]]))
 
 (def new-game-state
   {:moves  []
    :turn   :white
    :side   :white
-   :pieces {"A1" {:color :white :type :rook}
-            "B1" {:color :white :type :knight}
-            "C1" {:color :white :type :bishop}
-            "D1" {:color :white :type :queen}
-            "E1" {:color :white :type :king}
-            "F1" {:color :white :type :bishop}
-            "G1" {:color :white :type :knight}
-            "H1" {:color :white :type :rook}
-            "A2" {:color :white :type :pawn}
-            "B2" {:color :white :type :pawn}
-            "C2" {:color :white :type :pawn}
-            "D2" {:color :white :type :pawn}
-            "E2" {:color :white :type :pawn}
-            "F2" {:color :white :type :pawn}
-            "G2" {:color :white :type :pawn}
-            "H2" {:color :white :type :pawn}
-            "A7" {:color :black :type :pawn}
-            "B7" {:color :black :type :pawn}
-            "C7" {:color :black :type :pawn}
-            "D7" {:color :black :type :pawn}
-            "E7" {:color :black :type :pawn}
-            "F7" {:color :black :type :pawn}
-            "G7" {:color :black :type :pawn}
-            "H7" {:color :black :type :pawn}
-            "A8" {:color :black :type :rook}
-            "B8" {:color :black :type :knight}
-            "C8" {:color :black :type :bishop}
-            "D8" {:color :black :type :queen}
-            "E8" {:color :black :type :king}
-            "F8" {:color :black :type :bishop}
-            "G8" {:color :black :type :knight}
-            "H8" {:color :black :type :rook}}})
+   :pieces initial-board-config})
 
 (rf/reg-event-db
   ::initialize

@@ -139,16 +139,13 @@
         castling       (->> [:king-side :queen-side]
                             (map (partial castling-possible? board moves pos))
                             (remove nil?))]
-    (-> #{}
-        (into standard-moves)
-        (into castling))))
+    (cond-> #{}
+      (seq standard-moves) (into standard-moves)
+      (seq castling)       (into castling))))
 
-(defn valid-move?
-  [board moves from to]
-  (case (get-in board [from :type])
-    :pawn   ((pawn-moves board moves from) to)
-    :knight ((knight-moves board from) to)
-    :bishop ((bishop-moves board from) to)
-    :rook   ((rook-moves board from) to)
-    :queen  ((queen-moves board from) to)
-    :king   ((king-moves board moves from) to)))
+(defn board-after-move
+  [board from to]
+  (let [moved-piece (get board from)]
+    (-> board
+        (assoc to moved-piece)
+        (dissoc from))))

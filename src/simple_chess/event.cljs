@@ -1,7 +1,7 @@
 (ns simple-chess.event
   (:require
    [re-frame.core :as rf]
-   [simple-chess.move :as move]
+   [simple-chess.validity :as validity]
    [simple-chess.constants :refer [initial-board-config]]
    [simple-chess.board-util :as util]))
 
@@ -17,7 +17,7 @@
     new-game-state))
 
 (defn move-piece [{:keys [db]} [_ from to]]
-  (when (move/valid-move? (:board db) (:moves db) from to)
+  (when (validity/valid-move? (:board db) (:moves db) from to)
     (let [piece       (get-in db [:board from])
           promotion?  (and (= :pawn (:type piece)) (util/promotion-rank? to))
           en-passant? (and (= :pawn (:type piece))

@@ -75,3 +75,19 @@
 (defn en-passant-pos
   [from to]
   (str (first to) (second from)))
+
+(defn castling-rook-move
+  [king-pos]
+  (let [king-file (first king-pos)
+        rank (second king-pos)]
+    (if (= king-file "G")
+      (mapv #(str % rank) ["H" "F"])
+      (mapv #(str % rank) ["A" "D"]))))
+
+(defn king-castling-move?
+  [from to]
+  (#{["E1" "G1"]
+     ["E1" "C1"]
+     ["E8" "G8"]
+     ["E8" "C8"]}
+    (vector from to)))

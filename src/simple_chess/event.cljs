@@ -22,7 +22,9 @@
           promotion?  (and (= :pawn (:type piece)) (util/promotion-rank? to))
           en-passant? (and (= :pawn (:type piece))
                            (not= (first from) (first to))
-                           (nil? (get-in db [:board to])))]
+                           (nil? (get-in db [:board to])))
+          castling?   (and (= :king (:type piece))
+                           (util/king-castling-move? from to))]
       {:db (-> db
                (assoc-in [:board to] piece)
                (update :board dissoc from))
@@ -30,7 +32,8 @@
                [[:dispatch [::change-turn]]
                 [:dispatch [::log-move from to]]]
              promotion?  (conj [:dispatch [::promote to]])
-             en-passant? (conj [:dispatch [::en-passant from to]]))})))
+             en-passant? (conj [:dispatch [::en-passant from to]])
+             castling?   (conj [:dispatch [::castling to]]))})))
 
 (rf/reg-event-fx
   ::move
@@ -78,6 +81,14 @@
   ::en-passant
   (fn [db [_ from to]]
     (update db :board dissoc (util/en-passant-pos from to))))
+
+(rf/reg-event-db
+  ::castling
+  (fn [db [_ king-pos]]
+    (let [[rook-from rook-to] (util/castling-rook-move king-pos)]
+      (-> db
+          (assoc-in [:board rook-to] (get-in db [:board rook-from]))
+          (update :board dissoc rook-from)))))
 
 (rf/reg-event-db
   ::log-move

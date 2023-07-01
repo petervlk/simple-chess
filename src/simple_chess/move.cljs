@@ -52,7 +52,6 @@
          (= 1 (Math/abs (- (first coords) prev-move-file)))
          (if white-move? [prev-move-file 6] [prev-move-file 3]))))
 
-
 (defn pawn-moves
   [board moves pos]
   (let [coords          (util/pos->coords pos)
@@ -93,16 +92,56 @@
 (def bishop-moves (long-distance-moves bishop-directions))
 (def queen-moves (long-distance-moves all-directions))
 
+(defn king-starting-pos
+  [color]
+  (if (= color :white) "E1" "E8"))
+
+(defn rook-starting-pos
+  [color side]
+  (let [rank (if (= color :white) 1 8)
+        file (if (= side :king-side) "H" "A")]
+    (str file rank)))
+
+(defn castling-path-clear?
+  [board color castling-side]
+  (let [rank (if (= color :white) 1 8)
+        files (if (= castling-side :king-side) ["F" "G"] ["B" "C" "D"])]
+    (->> files
+         (mapv #(str % rank))
+         (every? #(nil? (get board %))))))
+
+(defn castled-king-pos
+  [color castling-side]
+  (let [rank (if (= color :white) 1 8)
+        file (if (= castling-side :king-side) "G" "C")]
+    (str file rank)))
+
+(defn castling-possible?
+  [board moves pos castling-side]
+  (let [square-without-moves? (fn [moves square] (empty? (filter #(= square (first %)) moves)))
+        color                 (get-in board [pos :color])
+        king-init-pos         (king-starting-pos color)
+        rook-init-pos         (rook-starting-pos color castling-side)]
+    (and (square-without-moves? moves king-init-pos)
+         (square-without-moves? moves rook-init-pos)
+         (castling-path-clear? board color castling-side)
+         (castled-king-pos color castling-side))))
+
 (defn king-moves
-  [board pos]
-  (let [color  (get-in board [pos :color])
-        coords (util/pos->coords pos)]
-    (->> all-directions
-         (map #(map + coords %))
-         (map util/coords->pos)
-         (remove nil?)
-         (remove (partial util/allied-square? color board))
-         (into #{}))))
+  [board moves pos]
+  (let [color          (get-in board [pos :color])
+        coords         (util/pos->coords pos)
+        standard-moves (->> all-directions
+                            (map #(map + coords %))
+                            (map util/coords->pos)
+                            (remove nil?)
+                            (remove (partial util/allied-square? color board)))
+        castling       (->> [:king-side :queen-side]
+                            (map (partial castling-possible? board moves pos))
+                            (remove nil?))]
+    (-> #{}
+        (into standard-moves)
+        (into castling))))
 
 (defn valid-move?
   [board moves from to]
@@ -112,4 +151,4 @@
     :bishop ((bishop-moves board from) to)
     :rook   ((rook-moves board from) to)
     :queen  ((queen-moves board from) to)
-    :king   ((king-moves board from) to)))
+    :king   ((king-moves board moves from) to)))

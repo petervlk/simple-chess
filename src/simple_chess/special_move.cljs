@@ -6,15 +6,16 @@
   (let [white-move?       (= :white (get-in board [pos :color]))
         prev-move         (last moves)
         prev-move-end-pos (second prev-move)]
-    (and (= :pawn (get-in board [prev-move-end-pos :type]))
-         (= (mapv util/position-rank prev-move) (if white-move? [7 5] [2 4]))
-         (= (util/position-rank pos) (util/position-rank prev-move-end-pos))
-         (= 1 (Math/abs (- (util/position-file pos) (util/position-file prev-move-end-pos))))
-         (str (first prev-move-end-pos) (if white-move? 6 3)))))
+    (when (and
+            (= :pawn (get-in board [prev-move-end-pos :type]))
+            (= (mapv util/position-rank prev-move) (if white-move? [7 5] [2 4]))
+            (= (util/position-rank pos) (util/position-rank prev-move-end-pos))
+            (= 1 (Math/abs (- (util/position-file pos) (util/position-file prev-move-end-pos)))))
+      (hash-set (str (first prev-move-end-pos) (if white-move? 6 3))))))
 
 (defn castling-path-clear?
   [board color castling-side]
-  (let [rank (if (= color :white) 1 8)
+  (let [rank  (if (= color :white) 1 8)
         files (if (= castling-side :king-side) ["F" "G"] ["B" "C" "D"])]
     (->> files
          (mapv #(str % rank))

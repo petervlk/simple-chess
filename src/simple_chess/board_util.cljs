@@ -48,16 +48,12 @@
   (apply coords->pos (map + direction (pos->coords pos))))
 
 (defn square-black?
-  [file rank]
-  (odd? (+ (dec file) rank)))
+  [pos]
+  (odd? (+ (dec (position-file pos)) (position-rank pos))))
 
 (defn empty-square?
   [board pos]
   (nil? (get board pos)))
-
-(defn allied-square?
-  [color board pos]
-  (and (= color (:color (get board pos))) pos))
 
 (defn opponent-square?
   [color board pos]

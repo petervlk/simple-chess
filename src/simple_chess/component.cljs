@@ -22,11 +22,11 @@
    {:color :black :type :king}   piece/king-black})
 
 (defn square-colors
-  [file rank highlighted?]
+  [pos highlighted?]
   (cond
-    highlighted?                   ["bg-yellow-300" "text-[#769656]"]
-    (util/square-black? file rank) ["bg-[#769656]" "text-[#efeed3]"]
-    :else                          ["bg-[#efeed3]" "text-[#769656]"]))
+    highlighted?             ["bg-yellow-300" "text-[#769656]"]
+    (util/square-black? pos) ["bg-[#769656]" "text-[#efeed3]"]
+    :else                    ["bg-[#efeed3]" "text-[#769656]"]))
 
 (defn square-attrs
   [attrs-base pos colors]
@@ -36,13 +36,13 @@
       (update :class into colors)))
 
 (defn square
-  [attrs file rank]
-  (let [pos           (util/coords->pos file rank)
-        piece         @(rf/subscribe [::sub/piece pos])
+  [attrs pos]
+  (let [piece         @(rf/subscribe [::sub/piece pos])
         icon          (get icons piece)
         highlighted?  @(rf/subscribe [::sub/highlighted-square? pos])
-        colors        (square-colors file rank highlighted?)
-        updated-attrs (square-attrs attrs pos colors)]
+        colors        (square-colors pos highlighted?)
+        updated-attrs (square-attrs attrs pos colors)
+        [file rank]   (util/pos->coords pos)]
     [:div updated-attrs
      (when icon [icon])
      (when (= rank 1)
@@ -61,6 +61,7 @@
      [:div.flex.justify-center.p-4
       [:div.grid.grid-cols-8.gap-0.border.border-black
        (for [rank (util/ranks side)
-             file (util/files side)]
-         ^{:key {:rank rank :file file}}
-         [square {:class ["flex-none" "h-24" "w-24" "relative"]} file rank])]]]))
+             file (util/files side)
+             :let [pos (util/coords->pos file rank)]]
+         ^{:key pos}
+         [square {:class ["flex-none" "h-24" "w-24" "relative"]} pos])]]]))

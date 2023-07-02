@@ -3,40 +3,45 @@
            [simple-chess.constants :as const]
            [simple-chess.special-move :as special]))
 
+(defn squares-in-direction
+  [direction board pos include-opponent? limit]
+  (let [color     (get-in board [pos :color])
+        reduce-fn (fn [squares pos]
+                    (cond
+                      (nil? pos)                                    (reduced squares)
+                      (util/empty-square? board pos)                (conj squares pos)
+                      (and include-opponent?
+                           (util/opponent-square? color board pos)) (reduced (conj squares pos))
+                      :else                                         (reduced squares)))]
+    (->> pos
+         (iterate #(util/position-moved direction %))
+         (drop 1)
+         (reduce reduce-fn [])
+         (take limit))))
+
+(defn visible-squares
+  ([directions]
+   (visible-squares directions const/board-dimension))
+  ([directions limit]
+   (fn [board pos]
+     (->> directions
+          (mapcat #(squares-in-direction % board pos true limit))
+          (into #{})))))
+
 (def knight-jumps [[-2 -1] [-2 1] [-1 -2] [-1 2] [1 -2] [1 2] [2 -1] [2 1]])
 (def rook-directions [[0 1] [0 -1] [1 0] [-1 0]])
 (def bishop-directions [[1 1] [1 -1] [-1 1] [-1 -1]])
 (def all-directions (into rook-directions bishop-directions))
 
-(defn empty-squares-in-direction
-  [direction board pos]
-  (->> pos
-       (iterate #(util/position-moved direction %))
-       (drop 1)
-       (take-while #(and % (util/empty-square? board %)))))
+(def rook-moves (visible-squares rook-directions))
+(def bishop-moves (visible-squares bishop-directions))
+(def queen-moves (visible-squares all-directions))
+(def knight-moves (visible-squares knight-jumps 1))
+(def king-moves-basic (visible-squares all-directions 1))
 
-(defn attacked-squares
-  [board pos direction]
-  (let [color         (get-in board [pos :color])
-        empty-squares (empty-squares-in-direction direction board pos)
-        attacked-pos  (->> pos
-                           (or (last empty-squares))
-                           (util/position-moved direction)
-                           (util/opponent-square? color board))]
-    (if attacked-pos
-      (conj empty-squares attacked-pos)
-      empty-squares)))
-
-(defn long-distance-moves
-  [directions]
-  (fn [board pos]
-    (->> directions
-         (mapcat (partial attacked-squares board pos))
-         (into #{}))))
-
-(def rook-moves (long-distance-moves rook-directions))
-(def bishop-moves (long-distance-moves bishop-directions))
-(def queen-moves (long-distance-moves all-directions))
+(defn king-moves
+  [board moves pos]
+  (into (king-moves-basic board pos) (special/castling-moves board moves pos)))
 
 (defn pawn-in-starting-pos?
   [color pos]
@@ -48,43 +53,22 @@
   [color]
   (if (= color :white) [0 1] [0 -1]))
 
-(defn pawn-moves
-  [board moves pos]
+(defn pawn-moves-basic
+  [board pos]
   (let [color                (get-in board [pos :color])
         direction            (pawn-movement-direction color)
-        max-distance         (if (pawn-in-starting-pos? color pos) 2 1)
-        en-passant-move      (special/en-passant-possible? board moves pos)
-        forward-moves        (take max-distance (empty-squares-in-direction direction board pos))
+        limit-fwd            (if (pawn-in-starting-pos? color pos) 2 1)
+        forward-moves        (squares-in-direction direction board pos false limit-fwd)
         attacking-directions (map #(map + direction %) [[1 0] [-1 0]])
         attacking-moves      (->> attacking-directions
                                   (map #(util/position-moved % pos))
                                   (map (partial util/opponent-square? color board))
                                   (remove nil?))]
-    (cond-> #{}
-      forward-moves   (into forward-moves)
-      attacking-moves (into attacking-moves)
-      en-passant-move (into (vector en-passant-move)))))
+    (into #{} (concat forward-moves attacking-moves))))
 
-(defn knight-moves
-  [board pos]
-  (let [color (get-in board [pos :color])]
-    (->> knight-jumps
-         (map #(util/position-moved % pos))
-         (remove nil?)
-         (remove (partial util/allied-square? color board))
-         (into #{}))))
-
-(defn king-moves
+(defn pawn-moves
   [board moves pos]
-  (let [color          (get-in board [pos :color])
-        standard-moves (->> all-directions
-                            (map #(util/position-moved % pos))
-                            (remove nil?)
-                            (remove (partial util/allied-square? color board)))
-        castling       (special/castling-moves board moves pos)]
-    (cond-> #{}
-      (seq standard-moves) (into standard-moves)
-      (seq castling)       (into castling))))
+  (into (pawn-moves-basic board pos) (special/en-passant-possible? board moves pos)))
 
 (defn board-after-move
   [board from to]

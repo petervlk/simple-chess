@@ -57,9 +57,10 @@
 (defn board
   []
   (let [side @(rf/subscribe [::sub/side])]
-    [:div.flex.justify-center.p-4
-     [:div.grid.grid-cols-8.gap-0.border.border-black
-      (for [rank (util/ranks side)
-            file (util/files side)]
-        ^{:key {:rank rank :file file}}
-        [square {:class ["flex-none" "h-24" "w-24" "relative"]} file rank])]]))
+    [:div.bg-slate-800.h-screen
+     [:div.flex.justify-center.p-4
+      [:div.grid.grid-cols-8.gap-0.border.border-black
+       (for [rank (util/ranks side)
+             file (util/files side)]
+         ^{:key {:rank rank :file file}}
+         [square {:class ["flex-none" "h-24" "w-24" "relative"]} file rank])]]]))

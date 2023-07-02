@@ -1,6 +1,5 @@
 (ns simple-chess.validity
   (:require
-   [simple-chess.board-util :as util]
    [simple-chess.constants]
    [simple-chess.move :as m]))
 

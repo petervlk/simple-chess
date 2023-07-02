@@ -5,13 +5,6 @@
   [n]
   (<= consts/board-start-idx n consts/board-dimension))
 
-(defn valid-coords?
-  [file rank]
-  (and
-    (in-board-range file)
-    (in-board-range rank)
-    [file rank]))
-
 (defn ranks
   [side]
   (if (= side :white)
@@ -33,11 +26,9 @@
        char))
 
 (defn coords->pos
-  ([[file rank]]
-   (coords->pos file rank))
-  ([file rank]
-   (when (valid-coords? file rank)
-     (str (file->str file) rank))))
+  [file rank]
+  (when (and (in-board-range file) (in-board-range rank))
+    (str (file->str file) rank)))
 
 (defn pos->coords
   [pos]
@@ -45,17 +36,24 @@
     (inc (- (.charCodeAt pos 0) (.charCodeAt \A 0)))
     (inc (- (.charCodeAt pos 1) (.charCodeAt \1 0)))))
 
+(defn- position-property
+  [extractor pos]
+  (when pos (extractor (pos->coords pos))))
+
+(def position-rank (partial position-property second))
+(def position-file (partial position-property first))
+
+(defn position-moved
+  [direction pos]
+  (apply coords->pos (map + direction (pos->coords pos))))
+
 (defn square-black?
   [file rank]
   (odd? (+ (dec file) rank)))
 
-(defn square-piece
-  [board file rank]
-  (get board (coords->pos file rank)))
-
 (defn empty-square?
-  [board file rank]
-  (nil? (square-piece board file rank)))
+  [board pos]
+  (nil? (get board pos)))
 
 (defn allied-square?
   [color board pos]

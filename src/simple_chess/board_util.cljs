@@ -51,6 +51,11 @@
   [pos]
   (odd? (+ (dec (position-file pos)) (position-rank pos))))
 
+(defn piece-color
+  [board pos]
+  (let [piece (get board pos)]
+    (and piece (:color piece))))
+
 (defn empty-square?
   [board pos]
   (nil? (get board pos)))

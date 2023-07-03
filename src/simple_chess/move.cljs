@@ -1,11 +1,12 @@
 (ns simple-chess.move
   (:require[simple-chess.board-util :as util]
            [simple-chess.constants :as const]
-           [simple-chess.special-move :as special]))
+           [simple-chess.special-move :as special]
+           [clojure.set :as set]))
 
 (defn squares-in-direction
   [direction board pos include-opponent? limit]
-  (let [color     (get-in board [pos :color])
+  (let [color     (util/piece-color board pos)
         reduce-fn (fn [squares pos]
                     (cond
                       (nil? pos)                                    (reduced squares)
@@ -53,18 +54,29 @@
   [color]
   (if (= color :white) [0 1] [0 -1]))
 
-(defn pawn-moves-basic
+(defn pawn-moves-advancing
   [board pos]
-  (let [color                (get-in board [pos :color])
+  (let [color             (util/piece-color board pos)
+        direction         (pawn-movement-direction color)
+        advancement-limit (if (pawn-in-starting-pos? color pos) 2 1)
+        forward-moves     (squares-in-direction direction board pos false advancement-limit)]
+    (into #{} forward-moves)))
+
+(defn pawn-moves-attacking
+  [board pos]
+  (let [color                (util/piece-color board pos)
         direction            (pawn-movement-direction color)
-        limit-fwd            (if (pawn-in-starting-pos? color pos) 2 1)
-        forward-moves        (squares-in-direction direction board pos false limit-fwd)
         attacking-directions (map #(map + direction %) [[1 0] [-1 0]])
         attacking-moves      (->> attacking-directions
                                   (map #(util/position-moved % pos))
-                                  (map (partial util/opponent-square? color board))
-                                  (remove nil?))]
-    (into #{} (concat forward-moves attacking-moves))))
+                                  (filter (partial util/opponent-square? color board)))]
+    (into #{} attacking-moves)))
+
+(defn pawn-moves-basic
+  [board pos]
+  (set/union
+    (pawn-moves-advancing board pos)
+    (pawn-moves-attacking board pos)))
 
 (defn pawn-moves
   [board moves pos]

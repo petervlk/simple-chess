@@ -62,15 +62,16 @@
   ::select-square
   select-square)
 
-(rf/reg-event-db
+(rf/reg-event-fx
   ::change-turn
-  (fn [db _]
+  (fn [{:keys [db]} _]
     (let [new-color (if (= (:turn db) :white)
                       :black
                       :white)]
-      (-> db
-          (assoc :turn new-color)
-          (dissoc :selected)))))
+      {:db (-> db
+           (assoc :turn new-color)
+           (dissoc :selected))
+       :fx [[:dispatch [::check-game-state]]]})))
 
 (rf/reg-event-db
   ::promote
@@ -94,3 +95,11 @@
   ::log-move
   (fn [db [_ from to]]
     (update db :moves (fnil conj []) [from to])))
+
+(rf/reg-event-db
+  ::check-game-state
+  (fn [{:keys [board turn moves]} _]
+    (case (validity/game-state board turn moves)
+      :check-mate (js/alert (str (util/opponent-color turn) " wins!"))
+      :stale-mate (js/alert  "Stale mate!")
+      nil)))

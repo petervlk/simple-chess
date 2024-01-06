@@ -90,3 +90,9 @@
      ["E8" "G8"]
      ["E8" "C8"]}
     (vector from to)))
+
+(defn opponent-color
+  [color]
+  (if (= color :white)
+    :black
+    :white))

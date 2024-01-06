@@ -52,4 +52,4 @@
   [board moves pos]
   (->> [:king-side :queen-side]
        (map (partial castling-possible? board moves pos))
-       (remove nil?)))
+       (filter identity)))
